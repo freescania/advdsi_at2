@@ -1,11 +1,28 @@
 from fastapi import FastAPI
 from starlette.responses import JSONResponse
-from joblib import load
-import pandas as pd
+#import pandas as pd
+import torch
 
 app = FastAPI()
 
-xgb_pipe = load('../models/XGB_4feat.joblib')
+#redefine model class
+class PytorchMultiClass(nn.Module):
+    def __init__(self, num_features):
+        super(PytorchMultiClass, self).__init__()
+
+        self.layer_1 = nn.Linear(num_features, 32)
+        self.layer_out = nn.Linear(32, 104)  # from 4, 104 number of classes
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = F.dropout(F.relu(self.layer_1(x)), training=self.training)
+        x = self.layer_out(x)
+        return self.softmax(x)
+
+num_features = 4
+model = TheModelClass(num_features) #*args, **kwargs
+model.load_state_dict(torch.load('../models/NN_4feat.pt'))
+model.eval()
 
 # Inside the main.py file, create a function called read_root() that will return a
 # dictionary with Hello as key and World as value. Add a decorator to it in order
@@ -19,7 +36,7 @@ def read_root():
 # to add a GET endpoint to app on /health with status code 200
 @app.get('/health', status_code=200)
 def healthcheck():
-    return 'XGB model is all ready to go!'
+    return 'Neural Network model is all ready to go!'
 
 #Inside the main.py file, create a function called format_features() with
 # genre, age, income and spending as input parameters that will return a
@@ -40,9 +57,10 @@ def format_features(review_aroma: int,	review_appearance: int, review_palate: in
 @app.get("/beer/type/")
 def predict(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
     features = format_features(review_aroma, review_appearance, review_palate, review_taste)
-    obs = pd.DataFrame(features)
-    pred = xgb_pipe.predict(obs)
-    return JSONResponse(pred.tolist())
+    obs = torch.Tensor(np.array(features))
+    #change for NN
+    output = model(obs)
+    return JSONResponse(output.tolist())
 
 @app.get("/model/architecture/)
 def architecture():
