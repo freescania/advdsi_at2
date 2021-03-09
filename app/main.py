@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from starlette.responses import JSONResponse
-#import pandas as pd
+import numpy as np
 import torch
+import torch.nn as nn
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
 
 app = FastAPI()
 
@@ -20,33 +23,37 @@ class PytorchMultiClass(nn.Module):
         return self.softmax(x)
 
 num_features = 4
-model = TheModelClass(num_features) #*args, **kwargs
+model = PytorchMultiClass(num_features) #*args, **kwargs
 model.load_state_dict(torch.load('../models/NN_4feat.pt'))
 model.eval()
 
-# Inside the main.py file, create a function called read_root() that will return a
-# dictionary with Hello as key and World as value. Add a decorator to it in order
-# to add a GET endpoint to app on the root
+# Inside the main.py file, create a function called read_root() that will describe the project
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return "This project was designed to take a few key features from a beer " \
+           "styles data set and then build a model that would take those inputs " \
+           "and then predict the given beer style. It takes four inputs (review_aroma, " \
+           "review_appearance, review_palate, review_taste) and each one must " \
+           "be given an integer score from 0-5 and then it will predict the beer " \
+           "style. Here is the github repo: https://github.com/freescania/advdsi_at2"
+
 
 # Inside the main.py file, create a function called healthcheck() that will
-# return GMM Clustering is all ready to go!. Add a decorator to it in order
+# will state 'Neural Network model is all ready to go!'. Add a decorator to it in order
 # to add a GET endpoint to app on /health with status code 200
 @app.get('/health', status_code=200)
 def healthcheck():
     return 'Neural Network model is all ready to go!'
 
 #Inside the main.py file, create a function called format_features() with
-# genre, age, income and spending as input parameters that will return a
+# review_aroma, review_appearance, review_palate and review_taste as input parameters that will return a
 # dictionary with the names of the features as keys and the inpot parameters as lists
 def format_features(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
   return {
-        'review aroma (1-5)': [review_aroma],
-        'review appearance (1-5)': [review_appearance],
-        'review palate (1-5)': [review_palate],
-        'review taste (1-5)': [review_taste]
+        'review aroma (0-5)': [review_aroma],
+        'review appearance (0-5)': [review_appearance],
+        'review palate (0-5)': [review_palate],
+        'review taste (0-5)': [review_taste]
     }
 
 #Inside the main.py file, Define a function called predict with the following logics:
@@ -57,12 +64,17 @@ def format_features(review_aroma: int,	review_appearance: int, review_palate: in
 @app.get("/beer/type/")
 def predict(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
     features = format_features(review_aroma, review_appearance, review_palate, review_taste)
-    obs = torch.Tensor(np.array(features))
+    feats = np.array(list(features.values())).T
+    zeroes = np.zeros((32, 4))
+    zeroes[0] = feats
+    scale_zeroes = sc.fit_transform(zeroes)
+    obs = torch.Tensor(scale_zeroes)
     #change for NN
     output = model(obs)
     return JSONResponse(output.tolist())
 
-@app.get("/model/architecture/)
+@app.get("/model/architecture/")
 def architecture():
-    return 'The model architecture is two linear layers, the first with a Relu activation function' \
-           'and then a final softmax layer to help generate the prediction'
+    return 'The model architecture is four layers: layer_1,  Linear, input=4, output=32,' \
+           'layer_2,  Linear, input=32, output=104, layer_3,  Linear, input=104, output=32,' \
+           'layer_out, Linear, input=32, output=104,  Softmax activation'
