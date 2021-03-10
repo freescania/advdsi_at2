@@ -3,8 +3,6 @@ from starlette.responses import JSONResponse
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
 
 app = FastAPI()
 
@@ -50,10 +48,10 @@ def healthcheck():
 # dictionary with the names of the features as keys and the inpot parameters as lists
 def format_features(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
   return {
-        'review aroma (0-5)': [review_aroma],
-        'review appearance (0-5)': [review_appearance],
-        'review palate (0-5)': [review_palate],
-        'review taste (0-5)': [review_taste]
+        'review aroma (0-5)': ([review_aroma]/5),
+        'review appearance (0-5)': ([review_appearance]/5),
+        'review palate (0-5)': ([review_palate]/5),
+        'review taste (0-5)': ([review_taste]/5)
     }
 
 #Inside the main.py file, Define a function called predict with the following logics:
@@ -65,10 +63,10 @@ def format_features(review_aroma: int,	review_appearance: int, review_palate: in
 def predict(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
     features = format_features(review_aroma, review_appearance, review_palate, review_taste)
     feats = np.array(list(features.values())).T
+    feats = (feats / 5)
     zeroes = np.zeros((32, 4))
     zeroes[0] = feats
-    scale_zeroes = sc.fit_transform(zeroes)
-    obs = torch.Tensor(scale_zeroes)
+    obs = torch.Tensor(zeroes)
     #change for NN
     output = model(obs)
     return JSONResponse(output.tolist())
