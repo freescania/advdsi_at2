@@ -1,29 +1,29 @@
 from fastapi import FastAPI
 from starlette.responses import JSONResponse
 import numpy as np
-import torch
-import torch.nn as nn
+#import torch
+#import torch.nn as nn
 
 app = FastAPI()
 
 #redefine model class
-class PytorchMultiClass(nn.Module):
-    def __init__(self, num_features):
-        super(PytorchMultiClass, self).__init__()
+#class PytorchMultiClass(nn.Module):
+    #def __init__(self, num_features):
+        #super(PytorchMultiClass, self).__init__()
 
-        self.layer_1 = nn.Linear(num_features, 32)
-        self.layer_out = nn.Linear(32, 104)  # from 4, 104 number of classes
-        self.softmax = nn.Softmax(dim=1)
+        #self.layer_1 = nn.Linear(num_features, 32)
+        #self.layer_out = nn.Linear(32, 104)  # from 4, 104 number of classes
+        #self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, x):
-        x = F.dropout(F.relu(self.layer_1(x)), training=self.training)
-        x = self.layer_out(x)
-        return self.softmax(x)
+    #def forward(self, x):
+        #x = F.dropout(F.relu(self.layer_1(x)), training=self.training)
+        #x = self.layer_out(x)
+        #return self.softmax(x)
 
-num_features = 4
-model = PytorchMultiClass(num_features) #*args, **kwargs
-model.load_state_dict(torch.load('../models/NN_4feat.pt'))
-model.eval()
+#num_features = 4
+#model = PytorchMultiClass(num_features) #*args, **kwargs
+#model.load_state_dict(torch.load('../models/NN_4feat.pt'))
+#model.eval()
 
 # Inside the main.py file, create a function called read_root() that will describe the project
 @app.get("/")
@@ -66,9 +66,9 @@ def predict(review_aroma: int,	review_appearance: int, review_palate: int, revie
     feats = (feats / 5)
     zeroes = np.zeros((32, 4))
     zeroes[0] = feats
-    obs = torch.Tensor(zeroes)
+    #obs = torch.Tensor(zeroes)
     #change for NN
-    output = model(obs)
+    output = ['American IPA']
     return JSONResponse(output.tolist())
 
 @app.get("/model/architecture/")
