@@ -58,7 +58,7 @@ def format_features(review_aroma: int,	review_appearance: int, review_palate: in
 #input parameters: review_aroma, review_appearance, review_palate, review_taste
 #logics: format the input parameters as dict, convert it to a dataframe and make prediction with gmm_pipe
 #output: prediction as json
-#Add a decorator to it in order to add a GET endpoint to app on /mall/customers/segmentation
+#Add a decorator to it in order to add a GET endpoint to app on /beer/type
 @app.get("/beer/type/")
 def predict(review_aroma: int,	review_appearance: int, review_palate: int, review_taste: int):
     features = format_features(review_aroma, review_appearance, review_palate, review_taste)
